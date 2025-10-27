@@ -3,45 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather DevOps App</title>
+    <title>🌦️ Smart Weather Dashboard</title>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(to bottom right, #007BFF, #00C6FF);
+            margin: 0;
+            height: 100vh;
             color: white;
             text-align: center;
-            padding: 40px;
+            overflow: hidden;
+            background: linear-gradient(120deg, #007BFF, #00C6FF);
+            transition: background 1s ease-in-out;
+        }
+
+        /* Background Animations */
+        @keyframes moveClouds {
+            0% { background-position: 0 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .clouds {
+            background: url('https://i.imgur.com/7bjWjSb.png') repeat-x;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            animation: moveClouds 60s linear infinite;
+            opacity: 0.3;
         }
 
         h1 {
+            margin-top: 40px;
             font-size: 2.5em;
-            margin-bottom: 10px;
+            letter-spacing: 1px;
         }
 
         form {
-            margin: 20px 0;
+            margin: 20px auto;
         }
 
         input[type="text"] {
-            padding: 10px;
+            padding: 12px;
             width: 60%;
             max-width: 300px;
+            border-radius: 25px;
             border: none;
-            border-radius: 20px;
             outline: none;
             text-align: center;
-            font-size: 1em;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 12px 20px;
             border: none;
-            background-color: #fff;
+            border-radius: 25px;
+            background-color: white;
             color: #007BFF;
             font-weight: bold;
-            border-radius: 20px;
             cursor: pointer;
-            margin-left: 10px;
         }
 
         button:hover {
@@ -52,11 +71,12 @@
         .weather-card {
             margin-top: 30px;
             background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
+            border-radius: 20px;
+            padding: 25px;
+            width: 320px;
             display: inline-block;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: fadeIn 1.2s ease-in-out;
         }
 
         .weather-card img {
@@ -64,51 +84,64 @@
         }
 
         .temp {
-            font-size: 2em;
+            font-size: 2.5em;
             font-weight: bold;
-            margin: 10px 0;
         }
 
         .desc {
             text-transform: capitalize;
+            margin-bottom: 10px;
         }
 
-        .error {
-            color: #ffcccc;
-            font-weight: bold;
+        .info {
+            font-size: 1.1em;
+            margin-top: 5px;
         }
 
         footer {
-            margin-top: 50px;
-            font-size: 0.9em;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
             opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
-    <h1>🌦️ Weather DevOps App</h1>
-    <p>Enter a city name to get live weather updates</p>
 
-    <form method="POST">
-        <input type="text" name="city" placeholder="Enter city name" required>
-        <button type="submit">Check</button>
-    </form>
+<div class="clouds"></div>
 
-    {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
+<h1>🌤️ Smart Weather Dashboard</h1>
+<p>Check live weather, humidity, and wind speed</p>
 
-    {% if weather %}
-    <div class="weather-card">
-        <h2>{{ weather.city }}</h2>
-        <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather Icon">
-        <p class="temp">{{ weather.temp }}°C</p>
-        <p class="desc">{{ weather.description }}</p>
-        <p>💧 Humidity: {{ weather.humidity }}%</p>
-        <p>🌬️ Wind: {{ weather.wind }} m/s</p>
-    </div>
-    {% endif %}
+<form method="POST">
+    <input type="text" name="city" placeholder="Enter City Name" required>
+    <button type="submit">Search</button>
+</form>
 
-    <footer>☁️ Created by Sayyam Jain | Powered by Flask & DevOps Tools ☁️</footer>
+{% if error %}
+<p style="color: #ffcccc;">{{ error }}</p>
+{% endif %}
+
+{% if weather %}
+<div class="weather-card">
+    <h2>{{ weather.city }}</h2>
+    <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather Icon">
+    <p class="temp">{{ weather.temp }}°C</p>
+    <p class="desc">{{ weather.description }}</p>
+    <p class="info">💧 Humidity: {{ weather.humidity }}%</p>
+    <p class="info">🌬️ Wind: {{ weather.wind }} m/s</p>
+    <p class="info">📅 {{ weather.date }}</p>
+    <p class="info">🕒 {{ weather.time }}</p>
+</div>
+{% endif %}
+
+<footer>☁️ Developed by <b>Sayyam Jain</b> | Flask + DevOps + Cloud ☁️</footer>
+
 </body>
 </html>
