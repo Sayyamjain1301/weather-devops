@@ -14,24 +14,23 @@
       overflow-x: hidden;
     }
 
-    /* 🌥️ Animated Clouds */
-    .clouds {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 300%;
-      height: 200px;
-      background: url('https://png.pngtree.com/thumb_back/fw800/background/20231006/pngtree-soft-clouds-background-image_13529122.png') repeat-x;
-      background-size: contain;
-      animation: moveClouds 60s linear infinite;
-      opacity: 0.3;
-      z-index: 1;
-    }
+   .clouds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 200px;
+  background: url('https://i.ibb.co/zF5rJ2R/clouds-bg.png') repeat-x;
+  background-size: contain;
+  animation: moveClouds 60s linear infinite;
+  opacity: 0.3;
+  z-index: 1;
+}
 
-    @keyframes moveClouds {
-      from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
-    }
+@keyframes moveClouds {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
 
     /* 🌤️ Center container */
     .container {
