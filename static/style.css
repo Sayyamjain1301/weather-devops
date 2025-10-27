@@ -1,0 +1,36 @@
+body {
+    background: url("/static/background.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: white;
+    text-align: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 30px;
+    display: inline-block;
+    margin-top: 10%;
+    box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.3);
+}
+
+button {
+    background-color: #4CAF50;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+    transition: 0.3s;
+}

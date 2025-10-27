@@ -3,186 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌦️ Smart Weather Dashboard</title>
+    <title>Weather DevOps App</title>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ✅ Connects your HTML to your CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            height: 100vh;
-            color: white;
-            text-align: center;
-            background: linear-gradient(120deg, #007BFF, #00C6FF);
-            transition: background 1s ease-in-out;
-            overflow-x: hidden;
-        }
-
-        .clouds {
-            background: url('https://i.imgur.com/7bjWjSb.png') repeat-x;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 200%;
-            height: 100%;
-            animation: moveClouds 80s linear infinite;
-            opacity: 0.25;
-        }
-
-        @keyframes moveClouds {
-            from { background-position: 0 0; }
-            to { background-position: 1000px 0; }
-        }
-
-        h1 {
-            margin-top: 40px;
-            font-size: 2.5em;
-            letter-spacing: 1px;
-        }
-
-        form {
-            margin: 20px auto;
-        }
-
-        input[type="text"] {
-            padding: 12px;
-            width: 60%;
-            max-width: 300px;
-            border-radius: 25px;
-            border: none;
-            outline: none;
-            text-align: center;
-        }
-
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 25px;
-            background-color: white;
-            color: #007BFF;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #007BFF;
-            color: white;
-        }
-
-        .weather-card {
-            margin-top: 30px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 25px;
-            width: 340px;
-            display: inline-block;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            animation: fadeIn 1.2s ease-in-out;
-        }
-
-        .weather-card img {
-            width: 100px;
-        }
-
-        .temp {
-            font-size: 2.5em;
-            font-weight: bold;
-        }
-
-        .desc {
-            text-transform: capitalize;
-            margin-bottom: 10px;
-        }
-
-        .info {
-            font-size: 1.1em;
-            margin-top: 5px;
-        }
-
-        canvas {
-            margin-top: 40px;
-            width: 90%;
-            max-width: 600px;
-        }
-
-        footer {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            opacity: 0.8;
-            font-size: 0.9em;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-    </style>
+    <!-- Optional Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
+    <div class="container">
+        <h1>🌤️ Weather Forecast App</h1>
+        <p>Enter a city name to check the current weather</p>
 
-<div class="clouds"></div>
+        <form action="/" method="post">
+            <input type="text" name="city" placeholder="Enter City" required>
+            <button type="submit">Check Weather</button>
+        </form>
 
-<h1>🌤️ Smart Weather Dashboard</h1>
-<p>Get real-time weather & forecasts powered by OpenWeather & DevOps ☁️</p>
+        {% if weather %}
+        <div class="result">
+            <h2>{{ weather['name'] }}</h2>
+            <p>🌡️ Temperature: {{ weather['main']['temp'] }}°C</p>
+            <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
+            <p>🌬️ Wind Speed: {{ weather['wind']['speed'] }} m/s</p>
+            <p>🌥️ Condition: {{ weather['weather'][0]['description'] }}</p>
+        </div>
+        {% endif %}
+    </div>
 
-<form method="POST">
-    <input type="text" name="city" placeholder="Enter City Name" required>
-    <button type="submit">Search</button>
-</form>
-
-{% if error %}
-<p style="color: #ffcccc;">{{ error }}</p>
-{% endif %}
-
-{% if weather %}
-<div class="weather-card">
-    <h2>{{ weather.city }}</h2>
-    <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather Icon">
-    <p class="temp">{{ weather.temp }}°C</p>
-    <p class="desc">{{ weather.description }}</p>
-    <p class="info">💧 Humidity: {{ weather.humidity }}%</p>
-    <p class="info">🌬️ Wind: {{ weather.wind }} m/s</p>
-    <p class="info">📅 {{ weather.date }}</p>
-    <p class="info">🕒 {{ weather.time }}</p>
-</div>
-
-<canvas id="forecastChart"></canvas>
-{% endif %}
-
-<footer>☁️ Built by <b>Sayyam Jain</b> | Flask + Chart.js + DevOps + Cloud ☁️</footer>
-
-{% if forecast %}
-<script>
-const ctx = document.getElementById('forecastChart').getContext('2d');
-const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: {{ forecast|map(attribute='time')|list }},
-        datasets: [{
-            label: 'Temperature (°C)',
-            data: {{ forecast|map(attribute='temp')|list }},
-            borderColor: 'white',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        plugins: {
-            legend: { labels: { color: 'white' } }
-        },
-        scales: {
-            x: { ticks: { color: 'white' } },
-            y: { ticks: { color: 'white' } }
-        }
-    }
-});
-</script>
-{% endif %}
-
+    <!-- Optional Animated Background -->
+    <div class="clouds"></div>
 </body>
 </html>
