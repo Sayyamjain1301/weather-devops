@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>☁️ Sayyam’s Smart Weather</title>
+  <title>🌦️ Sayyam's Smart Weather</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
   <div class="mode-toggle">
     <input type="checkbox" id="themeSwitch">
@@ -14,15 +15,15 @@
   </div>
 
   <div class="main">
-    <h1 class="title">🌦️ Sayyam’s Smart Weather Dashboard</h1>
+    <h1 class="title">🌍 Sayyam’s Smart Weather Dashboard</h1>
     <div id="clock"></div>
 
     <form action="/" method="post" class="search-bar">
       <input list="cities" id="cityInput" name="city" placeholder="🔍 Enter city..." required autocomplete="off">
       <datalist id="cities">
-        <option value="New York"><option value="London"><option value="Paris">
-        <option value="Tokyo"><option value="Mumbai"><option value="Dubai">
-        <option value="Sydney"><option value="Toronto"><option value="Berlin">
+        <option value="Pune"><option value="Mumbai"><option value="Delhi">
+        <option value="Bangalore"><option value="Hyderabad"><option value="Kolkata">
+        <option value="Chennai"><option value="Jaipur"><option value="Ahmedabad">
       </datalist>
       <button type="submit">Search</button>
       <button type="button" id="micBtn">🎤</button>
@@ -31,7 +32,7 @@
     {% if weather %}
     <div class="card">
       <h2>{{ weather['name'] }}</h2>
-      <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@2x.png" class="icon">
+      <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@4x.png" class="icon">
       <p class="temp">{{ weather['main']['temp'] }}°C</p>
       <p class="condition">{{ weather['weather'][0]['description'].title() }}</p>
       <div class="details">
@@ -67,7 +68,6 @@
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
       recognition.lang = "en-US";
 
       micBtn.addEventListener("click", () => {
@@ -76,16 +76,31 @@
       });
 
       recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        cityInput.value = transcript;
+        cityInput.value = e.results[0][0].transcript;
         micBtn.textContent = "🎤";
       };
 
       recognition.onerror = () => {
         micBtn.textContent = "🎤";
       };
+    }
+
+    // 🌈 Dynamic Backgrounds
+    const condition = "{{ condition }}";
+    const body = document.body;
+
+    if (condition.includes("rain")) {
+      body.classList.add("rainy");
+    } else if (condition.includes("clear")) {
+      body.classList.add("sunny");
+    } else if (condition.includes("cloud")) {
+      body.classList.add("cloudy");
+    } else if (condition.includes("snow")) {
+      body.classList.add("snowy");
+    } else if (condition.includes("thunder")) {
+      body.classList.add("stormy");
     } else {
-      micBtn.style.display = "none";
+      body.classList.add("default-bg");
     }
   </script>
 </body>
