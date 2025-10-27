@@ -3,48 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌦️ Interactive Weather App</title>
+    <title>☁️ Sayyam’s Weather Vision</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <div class="container">
-        <h1>🌤️ Weather Forecast App</h1>
-        <p>Type your city name below 👇</p>
-
-        <form action="/" method="post">
-            <!-- City input with auto-suggestions -->
-            <input list="cities" name="city" placeholder="Enter City" required>
+    <div class="main">
+        <h1 class="title">🌤️ Global Weather Dashboard</h1>
+        <form action="/" method="post" class="search-bar">
+            <input list="cities" name="city" placeholder="🔍 Enter city name..." required autocomplete="off">
             <datalist id="cities">
-                <option value="Pune">
+                <option value="New York">
+                <option value="London">
+                <option value="Paris">
+                <option value="Tokyo">
                 <option value="Mumbai">
-                <option value="Delhi">
-                <option value="Bengaluru">
-                <option value="Hyderabad">
-                <option value="Chennai">
-                <option value="Nagpur">
-                <option value="Kolkata">
-                <option value="Jaipur">
-                <option value="Ahmedabad">
+                <option value="Dubai">
+                <option value="Sydney">
+                <option value="Toronto">
             </datalist>
-
-            <button type="submit">Check Weather</button>
+            <button type="submit">Search</button>
         </form>
 
         {% if weather %}
-        <div class="result">
+        <div class="card">
             <h2>{{ weather['name'] }}</h2>
-            <p>🌡️ Temperature: {{ weather['main']['temp'] }}°C</p>
-            <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
-            <p>🌬️ Wind Speed: {{ weather['wind']['speed'] }} m/s</p>
-            <p>🌥️ Condition: {{ weather['weather'][0]['description'] }}</p>
+            <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@2x.png" class="icon">
+            <p class="temp">{{ weather['main']['temp'] }}°C</p>
+            <p class="condition">{{ weather['weather'][0]['description'].title() }}</p>
+            <div class="details">
+                <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
+                <p>🌬️ Wind: {{ weather['wind']['speed'] }} m/s</p>
+            </div>
         </div>
         {% endif %}
     </div>
 
-    <!-- Optional cloud animation background -->
-    <div class="clouds"></div>
+    <div class="footer">
+        <p>☁️ Designed by <strong>Sayyam Jain</strong> | Powered by OpenWeather</p>
+    </div>
 </body>
 </html>
