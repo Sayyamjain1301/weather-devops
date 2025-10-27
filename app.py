@@ -1,55 +1,149 @@
-from flask import Flask, render_template, request
-import requests
-import os
-from datetime import datetime
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌤️ Smart Weather Dashboard</title>
 
-app = Flask(__name__)
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      color: white;
+      background: linear-gradient(to bottom right, #00c6ff, #0072ff);
+      overflow-x: hidden;
+    }
 
-api_key = os.getenv("WEATHER_API_KEY")
+    /* 🌥️ Animated Clouds */
+    .clouds {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 300%;
+      height: 200px;
+      background: url('https://png.pngtree.com/thumb_back/fw800/background/20231006/pngtree-soft-clouds-background-image_13529122.png') repeat-x;
+      background-size: contain;
+      animation: moveClouds 60s linear infinite;
+      opacity: 0.3;
+      z-index: 1;
+    }
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    weather = None
-    forecast = []
-    error = None
+    @keyframes moveClouds {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
 
-    if request.method == "POST":
-        city = request.form["city"]
+    /* 🌤️ Center container */
+    .container {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
 
-        # Current weather API
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
-        res = requests.get(url)
-        data = res.json()
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
 
-        if data.get("cod") == 200:
-            weather = {
-                "city": data["name"],
-                "temp": data["main"]["temp"],
-                "description": data["weather"][0]["description"].title(),
-                "humidity": data["main"]["humidity"],
-                "wind": data["wind"]["speed"],
-                "icon": data["weather"][0]["icon"],
-                "time": datetime.now().strftime("%I:%M %p"),
-                "date": datetime.now().strftime("%A, %d %B %Y"),
-                "main": data["weather"][0]["main"]
-            }
+    p {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      margin-bottom: 1.5rem;
+    }
 
-            # 5-day forecast API
-            forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=metric"
-            forecast_res = requests.get(forecast_url)
-            forecast_data = forecast_res.json()
+    input[type="text"] {
+      padding: 12px 20px;
+      width: 260px;
+      border: none;
+      border-radius: 30px;
+      outline: none;
+      text-align: center;
+      font-size: 1rem;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
 
-            forecast = []
-            for item in forecast_data["list"][:5]:
-                forecast.append({
-                    "time": item["dt_txt"],
-                    "temp": item["main"]["temp"]
-                })
-        else:
-            error = "City not found! Please try again."
+    button {
+      padding: 12px 20px;
+      background: white;
+      color: #0072ff;
+      border: none;
+      border-radius: 30px;
+      margin-left: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
 
-    return render_template("index.html", weather=weather, forecast=forecast, error=error)
+    button:hover {
+      background: #0072ff;
+      color: white;
+      transform: scale(1.05);
+    }
 
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 15px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      display: inline-block;
+      animation: fadeIn 1s ease-in-out;
+    }
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 10px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    /* 📱 Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      input[type="text"] { width: 200px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="clouds"></div>
+
+  <div class="container">
+    <h1>🌦️ Smart Weather Dashboard</h1>
+    <p>Check live weather, humidity, and wind speed</p>
+
+    <form method="POST">
+      <input type="text" name="city" placeholder="Enter City Name" required>
+      <button type="submit">Search</button>
+    </form>
+
+    {% if weather %}
+      <div class="result">
+        <h2>🌍 {{ weather['city'] }}</h2>
+        <p>🌡️ Temperature: {{ weather['temperature'] }}°C</p>
+        <p>💧 Humidity: {{ weather['humidity'] }}%</p>
+        <p>🌬️ Wind Speed: {{ weather['wind_speed'] }} m/s</p>
+        <p>☁️ Condition: {{ weather['description'] }}</p>
+      </div>
+    {% endif %}
+
+    <div class="footer">
+      ☁️ Developed by <b>Sayyam Jain</b> | Flask + DevOps + Cloud ☁️
+    </div>
+  </div>
+</body>
+</html>
