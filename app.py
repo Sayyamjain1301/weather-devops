@@ -10,14 +10,16 @@ api_key = os.getenv("WEATHER_API_KEY")
 @app.route("/", methods=["GET", "POST"])
 def index():
     weather = None
+    forecast = []
     error = None
 
     if request.method == "POST":
         city = request.form["city"]
-        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
-        response = requests.get(url)
-        data = response.json()
+        # Current weather API
+        url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+        res = requests.get(url)
+        data = res.json()
 
         if data.get("cod") == 200:
             weather = {
@@ -28,12 +30,25 @@ def index():
                 "wind": data["wind"]["speed"],
                 "icon": data["weather"][0]["icon"],
                 "time": datetime.now().strftime("%I:%M %p"),
-                "date": datetime.now().strftime("%A, %d %B %Y")
+                "date": datetime.now().strftime("%A, %d %B %Y"),
+                "main": data["weather"][0]["main"]
             }
+
+            # 5-day forecast API
+            forecast_url = f"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={api_key}&units=metric"
+            forecast_res = requests.get(forecast_url)
+            forecast_data = forecast_res.json()
+
+            forecast = []
+            for item in forecast_data["list"][:5]:
+                forecast.append({
+                    "time": item["dt_txt"],
+                    "temp": item["main"]["temp"]
+                })
         else:
             error = "City not found! Please try again."
 
-    return render_template("index.html", weather=weather, error=error)
+    return render_template("index.html", weather=weather, forecast=forecast, error=error)
 
 
 if __name__ == "__main__":

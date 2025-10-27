@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌦️ Smart Weather Dashboard</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -11,15 +15,9 @@
             height: 100vh;
             color: white;
             text-align: center;
-            overflow: hidden;
             background: linear-gradient(120deg, #007BFF, #00C6FF);
             transition: background 1s ease-in-out;
-        }
-
-        /* Background Animations */
-        @keyframes moveClouds {
-            0% { background-position: 0 0; }
-            100% { background-position: 1000px 0; }
+            overflow-x: hidden;
         }
 
         .clouds {
@@ -29,8 +27,13 @@
             left: 0;
             width: 200%;
             height: 100%;
-            animation: moveClouds 60s linear infinite;
-            opacity: 0.3;
+            animation: moveClouds 80s linear infinite;
+            opacity: 0.25;
+        }
+
+        @keyframes moveClouds {
+            from { background-position: 0 0; }
+            to { background-position: 1000px 0; }
         }
 
         h1 {
@@ -73,7 +76,7 @@
             background: rgba(255, 255, 255, 0.2);
             border-radius: 20px;
             padding: 25px;
-            width: 320px;
+            width: 340px;
             display: inline-block;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             animation: fadeIn 1.2s ease-in-out;
@@ -98,6 +101,12 @@
             margin-top: 5px;
         }
 
+        canvas {
+            margin-top: 40px;
+            width: 90%;
+            max-width: 600px;
+        }
+
         footer {
             position: absolute;
             bottom: 20px;
@@ -117,7 +126,7 @@
 <div class="clouds"></div>
 
 <h1>🌤️ Smart Weather Dashboard</h1>
-<p>Check live weather, humidity, and wind speed</p>
+<p>Get real-time weather & forecasts powered by OpenWeather & DevOps ☁️</p>
 
 <form method="POST">
     <input type="text" name="city" placeholder="Enter City Name" required>
@@ -139,9 +148,41 @@
     <p class="info">📅 {{ weather.date }}</p>
     <p class="info">🕒 {{ weather.time }}</p>
 </div>
+
+<canvas id="forecastChart"></canvas>
 {% endif %}
 
-<footer>☁️ Developed by <b>Sayyam Jain</b> | Flask + DevOps + Cloud ☁️</footer>
+<footer>☁️ Built by <b>Sayyam Jain</b> | Flask + Chart.js + DevOps + Cloud ☁️</footer>
+
+{% if forecast %}
+<script>
+const ctx = document.getElementById('forecastChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ forecast|map(attribute='time')|list }},
+        datasets: [{
+            label: 'Temperature (°C)',
+            data: {{ forecast|map(attribute='temp')|list }},
+            borderColor: 'white',
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        plugins: {
+            legend: { labels: { color: 'white' } }
+        },
+        scales: {
+            x: { ticks: { color: 'white' } },
+            y: { ticks: { color: 'white' } }
+        }
+    }
+});
+</script>
+{% endif %}
 
 </body>
 </html>
