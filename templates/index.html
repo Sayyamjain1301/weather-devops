@@ -1,48 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☁️ Sayyam’s Weather Vision</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>☁️ Sayyam’s Smart Weather</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
-
 <body>
-    <div class="main">
-        <h1 class="title">🌤️ Global Weather Dashboard</h1>
-        <form action="/" method="post" class="search-bar">
-            <input list="cities" name="city" placeholder="🔍 Enter city name..." required autocomplete="off">
-            <datalist id="cities">
-                <option value="New York">
-                <option value="London">
-                <option value="Paris">
-                <option value="Tokyo">
-                <option value="Mumbai">
-                <option value="Dubai">
-                <option value="Sydney">
-                <option value="Toronto">
-            </datalist>
-            <button type="submit">Search</button>
-        </form>
+  <div class="mode-toggle">
+    <input type="checkbox" id="themeSwitch">
+    <label for="themeSwitch" class="switch"></label>
+  </div>
 
-        {% if weather %}
-        <div class="card">
-            <h2>{{ weather['name'] }}</h2>
-            <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@2x.png" class="icon">
-            <p class="temp">{{ weather['main']['temp'] }}°C</p>
-            <p class="condition">{{ weather['weather'][0]['description'].title() }}</p>
-            <div class="details">
-                <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
-                <p>🌬️ Wind: {{ weather['wind']['speed'] }} m/s</p>
-            </div>
-        </div>
-        {% endif %}
-    </div>
+  <div class="main">
+    <h1 class="title">🌦️ Sayyam’s Smart Weather Dashboard</h1>
+    <div id="clock"></div>
 
-    <div class="footer">
-        <p>☁️ Designed by <strong>Sayyam Jain</strong> | Powered by OpenWeather</p>
+    <form action="/" method="post" class="search-bar">
+      <input list="cities" id="cityInput" name="city" placeholder="🔍 Enter city..." required autocomplete="off">
+      <datalist id="cities">
+        <option value="New York"><option value="London"><option value="Paris">
+        <option value="Tokyo"><option value="Mumbai"><option value="Dubai">
+        <option value="Sydney"><option value="Toronto"><option value="Berlin">
+      </datalist>
+      <button type="submit">Search</button>
+      <button type="button" id="micBtn">🎤</button>
+    </form>
+
+    {% if weather %}
+    <div class="card">
+      <h2>{{ weather['name'] }}</h2>
+      <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@2x.png" class="icon">
+      <p class="temp">{{ weather['main']['temp'] }}°C</p>
+      <p class="condition">{{ weather['weather'][0]['description'].title() }}</p>
+      <div class="details">
+        <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
+        <p>🌬️ Wind: {{ weather['wind']['speed'] }} m/s</p>
+      </div>
     </div>
+    {% endif %}
+  </div>
+
+  <div class="footer">
+    <p>✨ Designed by <strong>Sayyam Jain</strong> | Powered by OpenWeather</p>
+  </div>
+
+  <script>
+    // 🕐 Live Clock
+    setInterval(() => {
+      const clock = document.getElementById("clock");
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString();
+    }, 1000);
+
+    // 🌗 Theme Toggle
+    const themeSwitch = document.getElementById("themeSwitch");
+    themeSwitch.addEventListener("change", () => {
+      document.body.classList.toggle("light-mode");
+    });
+
+    // 🎤 Voice Input
+    const micBtn = document.getElementById("micBtn");
+    const cityInput = document.getElementById("cityInput");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.lang = "en-US";
+
+      micBtn.addEventListener("click", () => {
+        recognition.start();
+        micBtn.textContent = "🎙️ Listening...";
+      });
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        cityInput.value = transcript;
+        micBtn.textContent = "🎤";
+      };
+
+      recognition.onerror = () => {
+        micBtn.textContent = "🎤";
+      };
+    } else {
+      micBtn.style.display = "none";
+    }
+  </script>
 </body>
 </html>
