@@ -2,142 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌤 AI Weather Intelligence</title>
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-  />
-  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <title>Weather + Gemini Chat</title>
   <style>
     body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #6dd5fa, #2980b9);
+      color: #fff;
       text-align: center;
-      margin: 0;
-      padding: 0;
+      padding: 40px;
     }
     .container {
-      background: white;
-      width: 350px;
-      margin: 40px auto;
+      background: rgba(0, 0, 0, 0.2);
       padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 16px;
+      width: 500px;
+      margin: auto;
     }
     input, button {
       padding: 10px;
-      border-radius: 8px;
-      border: none;
       margin: 5px;
+      border: none;
+      border-radius: 8px;
+    }
+    input {
+      width: 70%;
     }
     button {
-      background-color: #007bff;
+      background: #27ae60;
       color: white;
       cursor: pointer;
     }
     button:hover {
-      background-color: #0056b3;
+      background: #2ecc71;
     }
-    #map {
-      height: 200px;
-      width: 100%;
-      margin-top: 10px;
-      border-radius: 10px;
+    pre {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      max-height: 300px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>🌞 AI Weather Intelligence</h2>
-    <form id="weatherForm">
-      <input type="text" name="city" id="city" placeholder="Enter city" required>
-      <button type="submit">Search</button>
-    </form>
+    <h1>☁️ Weather + Gemini Chat</h1>
+    <div>
+      <input type="text" id="city" placeholder="Enter city name">
+      <button onclick="getWeather()">Get Weather</button>
+    </div>
+    <div id="weather"></div>
 
-    <h3 id="cityName">--</h3>
-    <p>🌡 <span id="temp">--</span>°C</p>
-    <p><span id="desc">--</span></p>
-    <p>💧 Humidity: <span id="humidity">--</span>%</p>
-    <p>🧠 AI Summary: <span id="aiSummary">--</span></p>
+    <hr>
 
-    <h4>📍 Live Location Map</h4>
-    <div id="map"></div>
-
-    <h4>🧩 AI Assistant</h4>
-    <form id="aiForm">
-      <input type="text" id="prompt" placeholder="Ask AI about weather...">
-      <button type="submit">Ask AI</button>
-    </form>
-    <p id="aiResponse">No response from AI.</p>
+    <div>
+      <textarea id="prompt" rows="3" placeholder="Ask Gemini something..." style="width: 90%; border-radius:8px;"></textarea>
+      <br>
+      <button onclick="askGemini()">Ask Gemini</button>
+    </div>
+    <pre id="response"></pre>
   </div>
 
   <script>
-    let map, marker;
-
-    // Initialize map
-    function initMap(lat = 20.5937, lon = 78.9629) {
-      if (map) {
-        map.remove();
-      }
-      map = L.map('map').setView([lat, lon], 10);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-      marker = L.marker([lat, lon]).addTo(map);
+    async function getWeather() {
+      const city = document.getElementById('city').value;
+      const res = await fetch(`/weather?city=${city}`);
+      const data = await res.json();
+      document.getElementById('weather').innerHTML =
+        data.error ? `<b>Error:</b> ${data.error}` :
+        `<b>${data.city}</b>: ${data.temperature}°C, ${data.description}`;
     }
 
-    initMap();
-
-    // Fetch weather data
-    document.getElementById('weatherForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const city = document.getElementById('city').value;
-
-      const res = await fetch('/weather', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `city=${encodeURIComponent(city)}`
-      });
-
-      const data = await res.json();
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-
-      document.getElementById('cityName').textContent = data.name;
-      document.getElementById('temp').textContent = data.main.temp;
-      document.getElementById('desc').textContent = data.weather[0].description;
-      document.getElementById('humidity').textContent = data.main.humidity;
-
-      const lat = data.coord.lat;
-      const lon = data.coord.lon;
-      initMap(lat, lon);
-
-      // Generate AI summary
-      const aiPrompt = `Give a short, simple weather summary for ${city}. Temperature: ${data.main.temp}°C, humidity: ${data.main.humidity}%.`;
-      const aiRes = await fetch('/assistant_ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `prompt=${encodeURIComponent(aiPrompt)}`
-      });
-      const aiData = await aiRes.json();
-      document.getElementById('aiSummary').textContent = aiData.response || "No AI summary available.";
-    });
-
-    // AI Assistant Chat
-    document.getElementById('aiForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    async function askGemini() {
       const prompt = document.getElementById('prompt').value;
-      const res = await fetch('/assistant_ai', {
+      const res = await fetch('/ask', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `prompt=${encodeURIComponent(prompt)}`
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
       const data = await res.json();
-      document.getElementById('aiResponse').textContent = data.response || data.error || "No response.";
-    });
+      document.getElementById('response').textContent = data.reply || data.error;
+    }
   </script>
 </body>
 </html>
