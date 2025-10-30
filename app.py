@@ -1,71 +1,54 @@
-from flask import Flask, request, jsonify, render_template
-import requests
-import google.generativeai as genai
-import os
+from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
+import os
+import google.generativeai as genai
+import requests
 
 # Load environment variables
 load_dotenv()
 
-# Load API keys
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+# API Keys
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
 
-# Check for missing keys
 if not GEMINI_KEY or not OPENWEATHER_KEY:
     raise ValueError("⚠️ Missing API keys! Check your .env file.")
 
-# Configure Gemini AI
+# Configure Gemini
 genai.configure(api_key=GEMINI_KEY)
+model = genai.GenerativeModel("gemini-pro")
 
-# Flask app
-app = Flask(__name__)
+# --- ROUTES ---
 
-# 🔹 Home route
-@app.route('/')
+@app.route("/")
 def home():
-    return render_template('index.html')
+    return render_template("index.html")
 
-
-# 🔹 Weather route
-@app.route('/weather', methods=['POST'])
-def get_weather():
+@app.route("/ask", methods=["POST"])
+def ask():
     try:
-        city = request.form['city']
-        print(f"🌤 Fetching weather for: {city}")
-        weather_url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
-
-        res = requests.get(weather_url)
-        data = res.json()
-        print("📦 API Response:", data)
-
-        if data.get("cod") != 200:
-            return jsonify({"error": data.get("message", "Error fetching weather")}), 400
-        
-        return jsonify(data)
-    
+        data = request.get_json()
+        prompt = data.get("prompt")
+        response = model.generate_content(prompt)
+        return jsonify({"reply": response.text})
     except Exception as e:
-        print("❌ Weather route error:", e)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)})
 
+@app.route("/weather", methods=["GET"])
+def weather():
+    city = request.args.get("city", "Pune")
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
+    res = requests.get(url).json()
+    if res.get("cod") != 200:
+        return jsonify({"error": res.get("message", "City not found")})
+    return jsonify({
+        "city": res["name"],
+        "temperature": res["main"]["temp"],
+        "description": res["weather"][0]["description"]
+    })
 
-# 🔹 Gemini AI Assistant route
-@app.route('/assistant_ai', methods=['POST'])
-def ai_assistant():
-    try:
-        user_prompt = request.form['prompt']
-        print(f"🤖 User asked: {user_prompt}")
-
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        response = model.generate_content(user_prompt)
-
-        return jsonify({"response": response.text})
-    
-    except Exception as e:
-        print("❌ Gemini route error:", e)
-        return jsonify({"error": str(e)}), 500
-
-
-# 🔹 Run the Flask app
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=10000, debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
