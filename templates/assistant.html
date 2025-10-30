@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AI Assistant - Smart Weather</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="assistant-container">
+    <h2>🧠 AI Assistant</h2>
+    <p class="small">Ask about the weather, forecasts, or travel tips. (Voice input supported in modern browsers)</p>
+
+    <div id="chatBox" class="chat-box">
+      <div class="ai-message">AI: Type or ask me anything...</div>
+    </div>
+
+    <div class="chat-input">
+      <input id="aiInput" placeholder="Ask something..." />
+      <button id="voiceBtn">🎤</button>
+      <button id="sendBtn">Send</button>
+    </div>
+
+    <a class="back" href="/">← Back to Dashboard</a>
+  </div>
+
+  <script>
+    const sendBtn = document.getElementById('sendBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const aiInput = document.getElementById('aiInput');
+    const chatBox = document.getElementById('chatBox');
+
+    async function sendQuery(text) {
+      if (!text) return;
+      chatBox.innerHTML += `<div class="user-message">You: ${text}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ query: text })
+      });
+      const j = await res.json();
+      const reply = j.reply || j.answer || 'Sorry, no reply';
+      chatBox.innerHTML += `<div class="ai-message">AI: ${reply}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // speak
+      if ('speechSynthesis' in window) {
+        const s = new SpeechSynthesisUtterance(reply);
+        s.lang = 'en-US';
+        window.speechSynthesis.speak(s);
+      }
+    }
+
+    sendBtn.onclick = () => {
+      const v = aiInput.value.trim();
+      if (!v) return;
+      sendQuery(v);
+      aiInput.value = '';
+    };
+
+    aiInput.addEventListener('keypress', (e) => { if (e.key==='Enter') sendBtn.click(); });
+
+    // Voice input
+    voiceBtn.onclick = () => {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Speech recognition not supported in this browser.');
+        return;
+      }
+      const r = new SpeechRecognition();
+      r.lang = 'en-IN';
+      r.start();
+      r.onresult = (ev) => {
+        const text = ev.results[0][0].transcript;
+        aiInput.value = text;
+        sendQuery(text);
+      };
+    };
+  </script>
+</body>
+</html>

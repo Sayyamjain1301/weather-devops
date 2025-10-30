@@ -1,3 +1,8 @@
-Flask
-requests
-prometheus-flask-exporter
+flask==3.0.3
+requests==2.32.3
+python-dotenv==1.0.1
+google-generativeai==0.8.3
+pyttsx3==2.90
+tqdm==4.67.1
+typing-extensions==4.12.2
+urllib3==2.2.3

@@ -1,107 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌦️ Sayyam's Smart Weather</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>🌦️ AI Weather Intelligence</title>
+
+  <!-- Link to CSS -->
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body>
-  <div class="mode-toggle">
-    <input type="checkbox" id="themeSwitch">
-    <label for="themeSwitch" class="switch"></label>
-  </div>
+  <div class="container">
+    <h1>🌤️ AI Weather Intelligence</h1>
 
-  <div class="main">
-    <h1 class="title">🌍 Sayyam’s Smart Weather Dashboard</h1>
-    <div id="clock"></div>
-
-    <form action="/" method="post" class="search-bar">
-      <input list="cities" id="cityInput" name="city" placeholder="🔍 Enter city..." required autocomplete="off">
-      <datalist id="cities">
-        <option value="Pune"><option value="Mumbai"><option value="Delhi">
-        <option value="Bangalore"><option value="Hyderabad"><option value="Kolkata">
-        <option value="Chennai"><option value="Jaipur"><option value="Ahmedabad">
-      </datalist>
-      <button type="submit">Search</button>
-      <button type="button" id="micBtn">🎤</button>
-    </form>
-
-    {% if weather %}
-    <div class="card">
-      <h2>{{ weather['name'] }}</h2>
-      <img src="https://openweathermap.org/img/wn/{{ weather['weather'][0]['icon'] }}@4x.png" class="icon">
-      <p class="temp">{{ weather['main']['temp'] }}°C</p>
-      <p class="condition">{{ weather['weather'][0]['description'].title() }}</p>
-      <div class="details">
-        <p>💧 Humidity: {{ weather['main']['humidity'] }}%</p>
-        <p>🌬️ Wind: {{ weather['wind']['speed'] }} m/s</p>
-      </div>
+    <!-- 🌍 Weather Section -->
+    <div class="section">
+      <input id="city" type="text" placeholder="Enter city name" />
+      <button id="search">Search</button>
     </div>
-    {% endif %}
+
+    <!-- Display weather result -->
+    <div id="weather" class="result"></div>
+
+    <!-- 🤖 AI Assistant Section -->
+    <div class="section">
+      <h3>🧠 AI Assistant</h3>
+      <input id="question" type="text" placeholder="Ask e.g., Will it rain tomorrow?" />
+      <button id="ask">Ask AI</button>
+    </div>
+
+    <!-- Display AI result -->
+    <div id="ai-response" class="result"></div>
   </div>
 
-  <div class="footer">
-    <p>✨ Designed by <strong>Sayyam Jain</strong> | Powered by OpenWeather</p>
-  </div>
-
-  <script>
-    // 🕐 Live Clock
-    setInterval(() => {
-      const clock = document.getElementById("clock");
-      const now = new Date();
-      clock.textContent = now.toLocaleTimeString();
-    }, 1000);
-
-    // 🌗 Theme Toggle
-    const themeSwitch = document.getElementById("themeSwitch");
-    themeSwitch.addEventListener("change", () => {
-      document.body.classList.toggle("light-mode");
-    });
-
-    // 🎤 Voice Input
-    const micBtn = document.getElementById("micBtn");
-    const cityInput = document.getElementById("cityInput");
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
-
-      micBtn.addEventListener("click", () => {
-        recognition.start();
-        micBtn.textContent = "🎙️ Listening...";
-      });
-
-      recognition.onresult = (e) => {
-        cityInput.value = e.results[0][0].transcript;
-        micBtn.textContent = "🎤";
-      };
-
-      recognition.onerror = () => {
-        micBtn.textContent = "🎤";
-      };
-    }
-
-    // 🌈 Dynamic Backgrounds
-    const condition = "{{ condition }}";
-    const body = document.body;
-
-    if (condition.includes("rain")) {
-      body.classList.add("rainy");
-    } else if (condition.includes("clear")) {
-      body.classList.add("sunny");
-    } else if (condition.includes("cloud")) {
-      body.classList.add("cloudy");
-    } else if (condition.includes("snow")) {
-      body.classList.add("snowy");
-    } else if (condition.includes("thunder")) {
-      body.classList.add("stormy");
-    } else {
-      body.classList.add("default-bg");
-    }
-  </script>
+  <!-- Link to JavaScript -->
+  <script src="/static/script.js"></script>
 </body>
 </html>
