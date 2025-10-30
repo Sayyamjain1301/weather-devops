@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "weathermindai",
+  "private_key_id": "b9fe478b3068d1522298a712ddb64e67588eacd3",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDfd7tWui8+TgDn\nl9fGjsFC8DZzUyMJDnIMwudS5/NZnUsYIY+1N80nndzp+B/GHkXGyDa4lsRYMr0x\nRaDUO+7juNGvY1eQsdez6jpp2XGahGhSlSa61OUM2QMrc0sYRau0/wpjVcWd97aa\n2N3XM7zsbd0GSD/FxfwLZ5wGv4PeT3jn4G35UK+rRSpazoCp9MW3RHNjBRP4RhFP\nDIt30tx5bG4IBf8TuUK0vsohH690IGnpfgDHWrnlL0JsYijmP7u/C0A+XQISKFJ5\nH00awwx0iwa0KJPyO6z434j6QPO4z5uszp7YM/CJ8iXsYxpWdanYjokjA6rnl0WA\n/M5bKgsLAgMBAAECggEABmKZM+KZkIWXbDUuoU+8Ru9oz5zbvqVdbeNH+f2CxlIl\nkWFyS8tqPtfzqpUL5etA4fdlvZqVOkanDVhRSlfjgsUMvMGxUg6vMNJxjr+12yRF\nfBndL0z/h15+wxmRqGrAe9fJjFXjBjwpDvfkL+vWqyV+HpPhF7IU7rZPIDiZT8QF\nP5jMSa1+1+n4W778aFPteFEq2UFT2K8Cx4mSFcalTQJBaCKIUpkbRgfcg/TcGI00\nl4Z5mVk6WB4wL2frdjyJHQJZ8YpsOffts1wKyhjqt0ojp4wg4KEukpEqfplVUVQP\nNLFyye07DXgpyYgZoJfz+eVwLqupvK0pveGuBAvPZQKBgQD2G6rtocH6hvnFAKH4\n22dniZNs3snhufRvLEXWG8K+IOd4IkfNxRueQDfUzQp0Q6Kn7Y4q6m7IegNHWQJC\nBmPoRJhojxnIAZAZE1wI45CIsAC4c6PrqvLbWww/+XDqd8xTsq/N37ZjM9iV1SIT\n5WtOMgWOJmgqd7WaF0ZDZ3GlrwKBgQDocxsNLjIA6nFAffaYsOV/jT6m5jCxbL0Z\nDbsojtM0Rc0aziG0M1VY3Hg+TM4BP9YFZMPN6IQPtVT9QziJCibeaK5nhgBAqqT7\nvvHSA3Maqo3kgchs8UrnaZN7ve332ea92QjL0ulU0S1B4qLuOUuzmygMmeMsuYgX\nx5/NDQ9jZQKBgQDYhETfpTTcLI1nNQRKxPP3EgEigeqIbSnP+NpD4M52qMobVcVo\nEaYXlpXH4M/2s15RcNxngzINq9Jgnb0vyyFwQZD4RBVBcaaNeQu6QkJxDq7Dl/E5\nr37TXwmq6s/dZ6HabNTgQZXbNsywHP9LE8ZQ2A8tHTr9Sa36L8nAGSzRvwKBgQCU\nfDLjkIbQnvIJSG2lzBpOCGPlKVYhgFyrDGJp3hJ8abpDTTmqasAyK2OEKHvPwH9u\nopeRiN4TSronrjEHGT0LBcOiza6LoHYTej3u8dUtS5WoSl9FeD1o5cAYY5MHqGIF\nFAbSbMAwNg6675M0qdT5vjsvEX5Uq4+L4TDrQ1R5IQKBgQDBJG43uXtDyK/3CEEc\nTobf6h5riZAKzAx8hEL8DLdSGscufTZnobU7j+MIj7zMj9CWnWKCaTFrcZnt7N/0\nqAI6i63b2H/QDvSvnV2rlXzqMbgKu22tMuI8cOX4YS3G2x52HgbWrEY5TYmbAlGj\ncdo68oXCJICiThBsHqZ3nqt1Cg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firestore-access@weathermindai.iam.gserviceaccount.com",
+  "client_id": "100514334030939694258",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firestore-access%40weathermindai.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

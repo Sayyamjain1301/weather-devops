@@ -3,36 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🌦️ AI Weather Intelligence</title>
-
-  <!-- Link to CSS -->
-  <link rel="stylesheet" href="/static/style.css">
+  <title>🌤 AI Weather Intelligence</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+  />
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(to right, #74ebd5, #acb6e5);
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background: white;
+      width: 350px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+    input, button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin: 5px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #map {
+      height: 200px;
+      width: 100%;
+      margin-top: 10px;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌤️ AI Weather Intelligence</h1>
+    <h2>🌞 AI Weather Intelligence</h2>
+    <form id="weatherForm">
+      <input type="text" name="city" id="city" placeholder="Enter city" required>
+      <button type="submit">Search</button>
+    </form>
 
-    <!-- 🌍 Weather Section -->
-    <div class="section">
-      <input id="city" type="text" placeholder="Enter city name" />
-      <button id="search">Search</button>
-    </div>
+    <h3 id="cityName">--</h3>
+    <p>🌡 <span id="temp">--</span>°C</p>
+    <p><span id="desc">--</span></p>
+    <p>💧 Humidity: <span id="humidity">--</span>%</p>
+    <p>🧠 AI Summary: <span id="aiSummary">--</span></p>
 
-    <!-- Display weather result -->
-    <div id="weather" class="result"></div>
+    <h4>📍 Live Location Map</h4>
+    <div id="map"></div>
 
-    <!-- 🤖 AI Assistant Section -->
-    <div class="section">
-      <h3>🧠 AI Assistant</h3>
-      <input id="question" type="text" placeholder="Ask e.g., Will it rain tomorrow?" />
-      <button id="ask">Ask AI</button>
-    </div>
-
-    <!-- Display AI result -->
-    <div id="ai-response" class="result"></div>
+    <h4>🧩 AI Assistant</h4>
+    <form id="aiForm">
+      <input type="text" id="prompt" placeholder="Ask AI about weather...">
+      <button type="submit">Ask AI</button>
+    </form>
+    <p id="aiResponse">No response from AI.</p>
   </div>
 
-  <!-- Link to JavaScript -->
-  <script src="/static/script.js"></script>
+  <script>
+    let map, marker;
+
+    // Initialize map
+    function initMap(lat = 20.5937, lon = 78.9629) {
+      if (map) {
+        map.remove();
+      }
+      map = L.map('map').setView([lat, lon], 10);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      marker = L.marker([lat, lon]).addTo(map);
+    }
+
+    initMap();
+
+    // Fetch weather data
+    document.getElementById('weatherForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const city = document.getElementById('city').value;
+
+      const res = await fetch('/weather', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `city=${encodeURIComponent(city)}`
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      document.getElementById('cityName').textContent = data.name;
+      document.getElementById('temp').textContent = data.main.temp;
+      document.getElementById('desc').textContent = data.weather[0].description;
+      document.getElementById('humidity').textContent = data.main.humidity;
+
+      const lat = data.coord.lat;
+      const lon = data.coord.lon;
+      initMap(lat, lon);
+
+      // Generate AI summary
+      const aiPrompt = `Give a short, simple weather summary for ${city}. Temperature: ${data.main.temp}°C, humidity: ${data.main.humidity}%.`;
+      const aiRes = await fetch('/assistant_ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `prompt=${encodeURIComponent(aiPrompt)}`
+      });
+      const aiData = await aiRes.json();
+      document.getElementById('aiSummary').textContent = aiData.response || "No AI summary available.";
+    });
+
+    // AI Assistant Chat
+    document.getElementById('aiForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prompt = document.getElementById('prompt').value;
+      const res = await fetch('/assistant_ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `prompt=${encodeURIComponent(prompt)}`
+      });
+      const data = await res.json();
+      document.getElementById('aiResponse').textContent = data.response || data.error || "No response.";
+    });
+  </script>
 </body>
 </html>
