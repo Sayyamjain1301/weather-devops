@@ -1,36 +1,43 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE = 'weather-devops'
+        REPO_URL = 'https://github.com/Sayyamjain1301/weather-devops.git'
+    }
+
     stages {
-        stage('Clone Repo') {
+
+        stage('Declarative: Checkout SCM') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Sayyamjain1301/weather-devops.git'
+                echo 'Checking out source code...'
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Checkout') {
             steps {
-                sh 'pip install -r requirements.txt'
+                echo 'Pulling latest code from GitHub...'
+                git branch: 'main', url: "${REPO_URL}"
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t weather-ai-assistant .'
+                echo 'Building Docker image...'
+                sh 'docker build -t weather-devops .'
             }
         }
 
-        stage('Run Tests') {
+        stage('Run Container') {
             steps {
-                echo '✅ Running unit tests (if any)...'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                echo '🚀 Deploying container...'
-                sh 'docker run -d -p 10000:10000 weather-ai-assistant'
+                echo 'Running container...'
+                // Stop any existing container (optional)
+                sh '''
+                docker ps -q --filter "name=weather-devops" | grep -q . && docker stop weather-devops || true
+                docker ps -aq --filter "name=weather-devops" | grep -q . && docker rm weather-devops || true
+                docker run -d -p 10000:10000 --name weather-devops weather-devops
+                '''
             }
         }
     }
@@ -40,7 +47,7 @@ pipeline {
             echo '✅ Build and deployment successful!'
         }
         failure {
-            echo '❌ Build failed. Check Jenkins logs for details.'
+            echo '❌ Build failed. Please check logs.'
         }
     }
 }
