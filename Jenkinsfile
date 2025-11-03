@@ -2,51 +2,49 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'weather-devops'
-        REPO_URL = 'https://github.com/Sayyamjain1301/weather-devops.git'
+        APP_NAME = "weather-devops"
+        APP_PORT = "10000"
     }
 
     stages {
-
-        stage('Declarative: Checkout SCM') {
-            steps {
-                echo 'Checking out source code...'
-                checkout scm
-            }
-        }
-
         stage('Checkout') {
             steps {
-                echo 'Pulling latest code from GitHub...'
-                git branch: 'main', url: "${REPO_URL}"
+                echo "📦 Checking out source code..."
+                git branch: 'main', url: 'https://github.com/Sayyamjain1301/weather-devops.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh 'docker build -t weather-devops .'
+                echo "🐳 Building Docker image..."
+                sh 'docker build -t ${APP_NAME}:latest .'
             }
         }
 
-        stage('Run Container') {
+        stage('Stop Old Container') {
             steps {
-                echo 'Running Docker container...'
-                sh '''
-                docker ps -q --filter "name=weather-devops" | grep -q . && docker stop weather-devops || true
-                docker ps -aq --filter "name=weather-devops" | grep -q . && docker rm weather-devops || true
-                docker run -d -p 10000:10000 --name weather-devops weather-devops
-                '''
+                echo "🧹 Cleaning up old containers..."
+                sh """
+                    docker stop ${APP_NAME} || true
+                    docker rm ${APP_NAME} || true
+                """
+            }
+        }
+
+        stage('Run New Container') {
+            steps {
+                echo "🚀 Running new container..."
+                sh "docker run -d --name ${APP_NAME} -p ${APP_PORT}:${APP_PORT} ${APP_NAME}:latest"
             }
         }
     }
 
     post {
         success {
-            echo '✅ Build and deployment successful!'
+            echo "✅ Build & Deployment Successful! Visit: http://localhost:${APP_PORT}"
         }
         failure {
-            echo '❌ Build failed. Please check logs.'
+            echo "❌ Build Failed. Check Jenkins logs for details."
         }
     }
 }
