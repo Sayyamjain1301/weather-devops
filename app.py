@@ -1,88 +1,67 @@
-from flask import Flask, render_template, request, jsonify
-from dotenv import load_dotenv
+from flask import Flask, request, jsonify
 import google.generativeai as genai
 import requests
+from dotenv import load_dotenv
 import os
 
-# ✅ Load environment variables
-env_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path=env_path, override=True)
+# Load .env if running locally
+load_dotenv()
 
-# ✅ Read API keys
+app = Flask(__name__)
+
+# Get API keys from environment
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
 
-print("Gemini Key loaded:", bool(GEMINI_KEY))
-print("OpenWeather Key loaded:", bool(OPENWEATHER_KEY))
-
 if not GEMINI_KEY or not OPENWEATHER_KEY:
-    raise ValueError("⚠️ Missing API keys! Check your .env file.")
+    raise ValueError("❌ Missing API keys! Please check your .env or Railway variables.")
 
-# ✅ Configure Gemini
+# Configure Gemini
 genai.configure(api_key=GEMINI_KEY)
 
-# ✅ Initialize Flask
-app = Flask(__name__)
-
-# 🌤️ HOME PAGE
+# ✅ Home route (so Railway doesn't show 404)
 @app.route("/")
 def home():
-    return "<h1>🌦️ Weather + AI Assistant is Running!</h1><p>Use /weather or /ask endpoints.</p>"
+    return "✅ Flask + Gemini + Weather API is running successfully on Railway!"
 
-# 🌦️ WEATHER ENDPOINT
+# ✅ Weather route
 @app.route("/weather", methods=["GET"])
 def get_weather():
     city = request.args.get("city")
     if not city:
-        return jsonify({"error": "City name required"}), 400
+        return jsonify({"error": "City parameter is missing"}), 400
 
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
-    res = requests.get(url)
-    data = res.json()
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
+    try:
+        res = requests.get(url)
+        data = res.json()
 
-    if data.get("cod") != 200:
-        return jsonify({"error": data.get("message", "City not found")}), 400
+        if data.get("cod") != 200:
+            return jsonify({"error": data.get("message", "Unable to fetch weather")}), 400
 
-    weather_info = {
-        "city": data["name"],
-        "country": data["sys"]["country"],
-        "temp": data["main"]["temp"],
-        "humidity": data["main"]["humidity"],
-        "condition": data["weather"][0]["description"].capitalize(),
-        "lat": data["coord"]["lat"],
-        "lon": data["coord"]["lon"]
-    }
+        return jsonify({
+            "city": data["name"],
+            "temperature": data["main"]["temp"],
+            "condition": data["weather"][0]["description"]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    return jsonify(weather_info)
-
-# 🧠 GEMINI AI ENDPOINT
+# ✅ Gemini AI route
 @app.route("/ask", methods=["POST"])
 def ask_gemini():
     try:
-        data = request.get_json()
-        prompt = data.get("prompt", "").strip()
+        user_input = request.json.get("question")
+        if not user_input:
+            return jsonify({"error": "Question is required"}), 400
 
-        if not prompt:
-            return jsonify({"error": "Prompt required"}), 400
-
-        model = genai.GenerativeModel("models/gemini-2.0-flash")
-        response = model.generate_content(prompt)
-
-        if hasattr(response, "text") and response.text:
-            reply = response.text.strip()
-        elif hasattr(response, "candidates") and response.candidates:
-            reply = response.candidates[0].content.parts[0].text.strip()
-        else:
-            reply = "⚠️ No clear response from Gemini."
-
-        return jsonify({"response": reply})
-
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(user_input)
+        return jsonify({"answer": response.text})
     except Exception as e:
-        print("❌ Gemini Error:", e)
         return jsonify({"error": str(e)}), 500
 
-# 🚀 RUN SERVER (works for Railway)
+# ✅ Run app
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    print(f"🌍 Starting Weather + AI Assistant on port {port}...")
+    port = int(os.environ.get("PORT", 10000))  # Railway sets PORT automatically
     app.run(host="0.0.0.0", port=port, debug=True)
