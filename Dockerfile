@@ -1,8 +1,18 @@
+# Use an official lightweight Python image
 FROM python:3.10-slim
 
+# Set working directory
 WORKDIR /app
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . /app
-EXPOSE 5000
-CMD ["python", "app.py"]
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
+
+# Copy project files
+COPY . .
+
+# Expose Flask port
+EXPOSE 10000
+
+# Run with Gunicorn in production
+CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
