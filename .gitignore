@@ -1,0 +1,9 @@
+# .gitignore
+venv/
+__pycache__/
+*.pyc
+.env
+firestore-key.json
+.DS_Store
+*.log
+
