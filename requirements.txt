@@ -2,4 +2,4 @@ flask
 gunicorn
 google-generativeai
 python-dotenv
-requests
+requestsgunicorn
