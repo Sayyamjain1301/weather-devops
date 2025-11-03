@@ -1,54 +1,52 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import google.generativeai as genai
 import requests
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from waitress import serve
 
-# Load .env if running locally
+# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# Get API keys from environment
+# Load API keys from .env
 GEMINI_KEY = os.getenv("GEMINI_KEY")
 OPENWEATHER_KEY = os.getenv("OPENWEATHER_KEY")
 
-if not GEMINI_KEY or not OPENWEATHER_KEY:
-    raise ValueError("❌ Missing API keys! Please check your .env or Railway variables.")
-
-# Configure Gemini
+# Configure Gemini API
 genai.configure(api_key=GEMINI_KEY)
 
-# ✅ Home route (so Railway doesn't show 404)
+# Root route
 @app.route("/")
 def home():
-    return "✅ Flask + Gemini + Weather API is running successfully on Railway!"
+    return "<h2>✅ Flask + Gemini + Weather API is running successfully on Railway!</h2>"
 
-# ✅ Weather route
+# Route to get weather data
 @app.route("/weather", methods=["GET"])
 def get_weather():
     city = request.args.get("city")
     if not city:
-        return jsonify({"error": "City parameter is missing"}), 400
+        return jsonify({"error": "City name is required"}), 400
 
-    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
-    try:
-        res = requests.get(url)
-        data = res.json()
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHER_KEY}&units=metric"
+    response = requests.get(url)
 
-        if data.get("cod") != 200:
-            return jsonify({"error": data.get("message", "Unable to fetch weather")}), 400
+    if response.status_code != 200:
+        return jsonify({"error": "City not found"}), 404
 
-        return jsonify({
-            "city": data["name"],
-            "temperature": data["main"]["temp"],
-            "condition": data["weather"][0]["description"]
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    data = response.json()
+    weather = {
+        "city": data["name"],
+        "temperature": data["main"]["temp"],
+        "description": data["weather"][0]["description"],
+        "humidity": data["main"]["humidity"]
+    }
 
-# ✅ Gemini AI route
-@app.route("/ask", methods=["POST"])
+    return jsonify(weather)
+
+# Route for AI (Gemini) chat
+@app.route("/ask_gemini", methods=["POST"])
 def ask_gemini():
     try:
         user_input = request.json.get("question")
@@ -57,11 +55,15 @@ def ask_gemini():
 
         model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(user_input)
-        return jsonify({"answer": response.text})
+
+        return jsonify({"response": response.text})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# ✅ Run app
+
+# Entry point
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Railway sets PORT automatically
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    print(f"🌍 Starting Weather + Gemini AI app on port {port}")
+    serve(app, host="0.0.0.0", port=port)
