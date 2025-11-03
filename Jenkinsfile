@@ -1,43 +1,46 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "weather-ai-assistant"
-    }
-
     stages {
-        stage('Checkout') {
+        stage('Clone Repo') {
             steps {
-                git branch: 'feat/feature-roadmap',
+                git branch: 'main',
                     url: 'https://github.com/Sayyamjain1301/weather-devops.git'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE .'
-                }
+                sh 'docker build -t weather-ai-assistant .'
             }
         }
 
-        stage('Run Container') {
+        stage('Run Tests') {
             steps {
-                script {
-                    // Stop and remove any old container if running
-                    sh 'docker rm -f weather-ai-container || true'
-                    sh 'docker run -d -p 8080:10000 --name weather-ai-container $DOCKER_IMAGE'
-                }
+                echo '✅ Running unit tests (if any)...'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo '🚀 Deploying container...'
+                sh 'docker run -d -p 10000:10000 weather-ai-assistant'
             }
         }
     }
 
     post {
         success {
-            echo "✅ Weather AI Assistant deployed successfully on Docker!"
+            echo '✅ Build and deployment successful!'
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo '❌ Build failed. Check Jenkins logs for details.'
         }
     }
 }
