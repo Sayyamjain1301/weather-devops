@@ -31,8 +31,7 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                echo 'Running container...'
-                // Stop any existing container (optional)
+                echo 'Running Docker container...'
                 sh '''
                 docker ps -q --filter "name=weather-devops" | grep -q . && docker stop weather-devops || true
                 docker ps -aq --filter "name=weather-devops" | grep -q . && docker rm weather-devops || true
