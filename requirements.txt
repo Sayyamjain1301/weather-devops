@@ -1,6 +1,7 @@
 flask
+gunicorn
 requests
 python-dotenv
+firebase-admin
 google-generativeai
 prometheus-client
-gunicorn
