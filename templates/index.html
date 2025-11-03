@@ -1,89 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Weather + Gemini Chat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Weather + Gemini + Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2k8kX0yqk3kB1g+U0bq3Ly8w1x8qM1G6mZfX0hU=" crossorigin=""/>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #6dd5fa, #2980b9);
-      color: #fff;
-      text-align: center;
-      padding: 40px;
+      background: linear-gradient(135deg,#89f7fe,#66a6ff);
+      margin: 0; padding: 24px; display: flex; justify-content: center;
     }
-    .container {
-      background: rgba(0, 0, 0, 0.2);
-      padding: 20px;
-      border-radius: 16px;
-      width: 500px;
-      margin: auto;
+    .card {
+      width: 980px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      padding: 18px;
     }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border: none;
-      border-radius: 8px;
-    }
-    input {
-      width: 70%;
-    }
-    button {
-      background: #27ae60;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #2ecc71;
-    }
-    pre {
-      text-align: left;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 15px;
-      border-radius: 8px;
-      overflow-x: auto;
-      max-height: 300px;
-    }
+    .controls { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
+    input[type="text"] { padding:8px 10px; border-radius:6px; border:1px solid #ddd; width:320px; }
+    button { padding:8px 12px; border-radius:6px; background:#007bff; color:#fff; border:none; cursor:pointer; }
+    .row { display:flex; gap:12px; }
+    #map { height:420px; width:640px; border-radius:8px; }
+    .info { flex:1; min-width:300px; }
+    pre { white-space: pre-wrap; background:#fafafa; padding:10px; border-radius:8px; }
+    .small { font-size:0.85rem; color:#666; margin-top:6px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>☁️ Weather + Gemini Chat</h1>
-    <div>
-      <input type="text" id="city" placeholder="Enter city name">
-      <button onclick="getWeather()">Get Weather</button>
-    </div>
-    <div id="weather"></div>
+  <div class="card">
+    <h2>🌦 Weather + Gemini + Auto-Center Map</h2>
 
-    <hr>
-
-    <div>
-      <textarea id="prompt" rows="3" placeholder="Ask Gemini something..." style="width: 90%; border-radius:8px;"></textarea>
-      <br>
-      <button onclick="askGemini()">Ask Gemini</button>
+    <div class="controls">
+      <input id="city" type="text" placeholder="Enter city (e.g. Pune)" />
+      <button id="btnWeather">Get Weather</button>
+      <button id="btnLocate">Center on my location</button>
+      <div class="small">Map auto-centers to weather coordinates → marker + popup</div>
     </div>
-    <pre id="response"></pre>
+
+    <div class="row">
+      <div id="map"></div>
+
+      <div class="info">
+        <h3 id="place">—</h3>
+        <div id="weatherCard"><pre>Weather results will appear here</pre></div>
+        <div id="aiCard" style="margin-top:10px;"><pre>AI summary will appear here</pre></div>
+      </div>
+    </div>
   </div>
 
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-o9N1jFf8C2g8qg3R9zF1TzN0k8Jx3xQOQv0r8q0Q6mM=" crossorigin=""></script>
+
   <script>
-    async function getWeather() {
-      const city = document.getElementById('city').value;
-      const res = await fetch(`/weather?city=${city}`);
-      const data = await res.json();
-      document.getElementById('weather').innerHTML =
-        data.error ? `<b>Error:</b> ${data.error}` :
-        `<b>${data.city}</b>: ${data.temperature}°C, ${data.description}`;
+    // Initialize map (default center)
+    const map = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5); // India view
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    function setMap(lat, lon, title, popupHtml) {
+      const latf = parseFloat(lat), lonf = parseFloat(lon);
+      if (Number.isNaN(latf) || Number.isNaN(lonf)) return;
+      if (marker) map.removeLayer(marker);
+      marker = L.marker([latf, lonf]).addTo(map);
+      const zoomLevel = 10;
+      map.setView([latf, lonf], zoomLevel, { animate: true });
+      if (popupHtml) marker.bindPopup(popupHtml).openPopup();
+      if (title) document.getElementById('place').innerText = title;
     }
 
-    async function askGemini() {
-      const prompt = document.getElementById('prompt').value;
-      const res = await fetch('/ask', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      document.getElementById('response').textContent = data.reply || data.error;
+    async function geocodeCity(city) {
+      // fallback geocoding using Nominatim OSM (no key required)
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`;
+      try {
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' }});
+        const arr = await res.json();
+        if (arr && arr.length) return { lat: arr[0].lat, lon: arr[0].lon, display_name: arr[0].display_name };
+      } catch (e) {
+        console.warn('Geocode error', e);
+      }
+      return null;
     }
+
+    async function fetchWeather(city) {
+      document.getElementById('weatherCard').innerHTML = '<pre>⏳ Fetching weather...</pre>';
+      document.getElementById('aiCard').innerHTML = '<pre>⏳ Waiting for AI...</pre>';
+      try {
+        // call your backend /weather endpoint (GET with city param)
+        const res = await fetch(`/weather?city=${encodeURIComponent(city)}`);
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('weatherCard').innerHTML = `<pre style="color:red">Error: ${data.error}</pre>`;
+          return;
+        }
+
+        // Build weather display text
+        const txt = `City: ${data.city || city}
+Country: ${data.country || '-'}
+Temperature: ${data.temp ?? data.temperature ?? '-'} °C
+Humidity: ${data.humidity ?? '-'} %
+Condition: ${data.condition ?? data.desc ?? data.description ?? '-'}
+Latitude: ${data.lat ?? data.lat ?? '-'}
+Longitude: ${data.lon ?? data.lon ?? '-'}`;
+
+        document.getElementById('weatherCard').innerHTML = `<pre>${txt}</pre>`;
+
+        // Determine lat/lon to center map
+        let lat = data.lat ?? data.lat ?? null;
+        let lon = data.lon ?? data.lon ?? null;
+        if (lat && lon) {
+          setMap(lat, lon, `${data.city || city}`, `<b>${data.city || city}</b><br>${data.temp ?? data.temperature ?? '-'} °C`);
+        } else {
+          // try browser geolocation first? (user asked city so better geocode)
+          const geo = await geocodeCity(city);
+          if (geo) {
+            setMap(geo.lat, geo.lon, geo.display_name, `<b>${geo.display_name}</b>`);
+          } else {
+            document.getElementById('weatherCard').innerHTML += `\n\nCould not determine coordinates for map.`;
+          }
+        }
+
+        // call AI summary (if you have /ask or /ask_gemini)
+        // we POST JSON { prompt: ... } to /ask or /ask_gemini depending on your endpoint
+        // adjust the endpoint name to match your backend
+        const aiPayload = {
+          prompt: `Summarize this weather in 2 lines: ${txt}`
+        };
+
+        // Try /ask first, then fallback to /ask_gemini
+        let aiResp = null;
+        try {
+          const r1 = await fetch('/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(aiPayload)
+          });
+          const j1 = await r1.json();
+          // handle different response shapes
+          if (j1.reply || j1.response || j1.answer) {
+            aiResp = j1.reply ?? j1.response ?? j1.answer;
+          } else if (j1.error) {
+            aiResp = null;
+          } else if (typeof j1 === 'string') {
+            aiResp = j1;
+          }
+        } catch (e) {
+          console.warn('AI /ask error', e);
+        }
+
+        if (!aiResp) {
+          // try /ask_gemini
+          try {
+            const r2 = await fetch('/ask_gemini', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: `Explain the following weather briefly: ${txt}` })
+            });
+            const j2 = await r2.json();
+            aiResp = j2.response ?? j2.answer ?? (j2.reply || null);
+          } catch (e) {
+            console.warn('AI /ask_gemini error', e);
+          }
+        }
+
+        document.getElementById('aiCard').innerHTML = `<pre>${aiResp ?? 'AI not available or returned error.'}</pre>`;
+
+      } catch (err) {
+        document.getElementById('weatherCard').innerHTML = `<pre style="color:red">Fetch error: ${err}</pre>`;
+      }
+    }
+
+    // Buttons
+    document.getElementById('btnWeather').addEventListener('click', () => {
+      const city = document.getElementById('city').value.trim();
+      if (!city) return alert('Please enter a city');
+      fetchWeather(city);
+    });
+
+    // Center on user's geolocation
+    document.getElementById('btnLocate').addEventListener('click', () => {
+      if (!navigator.geolocation) return alert('Geolocation not supported');
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        setMap(lat, lon, 'Your location', `You are here (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+      }, (err) => {
+        alert('Unable to get location: ' + err.message);
+      }, { enableHighAccuracy: true, timeout: 8000 });
+    });
+
+    // Optionally auto-search a default city on page load
+    window.addEventListener('load', () => {
+      const defaultCity = 'Pune';
+      document.getElementById('city').value = defaultCity;
+      // do not auto-fetch to avoid extra calls, uncomment if you want auto-run:
+      // fetchWeather(defaultCity);
+    });
   </script>
 </body>
 </html>
