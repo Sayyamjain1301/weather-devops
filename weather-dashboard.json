@@ -1,0 +1,122 @@
+{
+  "id": null,
+  "uid": "weather-devops",
+  "title": "🌤️ Weather DevOps - API Metrics",
+  "tags": ["prometheus", "flask", "devops"],
+  "timezone": "browser",
+  "schemaVersion": 30,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "🌍 Total API Requests",
+      "targets": [
+        {
+          "expr": "sum(api_requests_total)",
+          "legendFormat": "Total Requests",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 100 },
+              { "color": "red", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "type": "graph",
+      "title": "📈 Requests per Endpoint",
+      "targets": [
+        {
+          "expr": "sum by (endpoint)(rate(api_requests_total[1m]))",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 6, "y": 0, "w": 12, "h": 8 },
+      "lines": true,
+      "fill": 2,
+      "linewidth": 2,
+      "nullPointMode": "null",
+      "points": false,
+      "yaxes": [
+        { "format": "short", "label": "Requests/s", "logBase": 1 },
+        { "format": "short", "logBase": 1 }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "📊 Endpoint Summary",
+      "targets": [
+        {
+          "expr": "sum by (endpoint)(api_requests_total)",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 6 },
+      "options": { "showHeader": true },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "endpoint": "Endpoint",
+              "Value": "Total Requests"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "✅ App Uptime",
+      "targets": [
+        {
+          "expr": "up",
+          "legendFormat": "App",
+          "refId": "A"
+        }
+      ],
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 6 },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto"
+      }
+    }
+  ],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "annotations": { "list": [] }
+}

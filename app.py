@@ -1,46 +1,26 @@
-from flask import Flask, request, jsonify
+from flask import Flask, Response
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
+# Initialize Flask app
 app = Flask(__name__)
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# Create Prometheus metric
+REQUEST_COUNT = Counter(
+    'weather_requests_created_total',
+    'Total number of weather API requests handled'
+)
 
-# Create Gemini model
-model = genai.GenerativeModel("gemini-1.5-pro-latest")
-
-# Prometheus metrics
-REQUEST_COUNT = Counter("api_requests_total", "Total API requests", ["endpoint"])
-
-@app.route("/")
+@app.route('/')
 def home():
-    REQUEST_COUNT.labels(endpoint="/").inc()
+    """Main route - increments the request counter."""
+    REQUEST_COUNT.inc()
     return "✅ Weather DevOps App is running successfully!"
 
-@app.route("/metrics")
+@app.route('/metrics')
 def metrics():
-    REQUEST_COUNT.labels(endpoint="/metrics").inc()
-    return generate_latest(), 200, {"Content-Type": CONTENT_TYPE_LATEST}
-
-@app.route("/ask", methods=["POST"])
-def ask_gemini():
-    REQUEST_COUNT.labels(endpoint="/ask").inc()
-    try:
-        data = request.get_json()
-        question = data.get("question")
-        if not question:
-            return jsonify({"error": "Missing 'question' field"}), 400
-        response = model.generate_content(question)
-        return jsonify({"answer": response.text})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    """Expose Prometheus metrics."""
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port)
+    # Run Flask on all network interfaces so Prometheus can access it
+    app.run(host="0.0.0.0", port=8080)
