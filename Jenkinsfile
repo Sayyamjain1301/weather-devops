@@ -2,56 +2,81 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "weather-app"
-        IMAGE_NAME = "weather-app:latest"
-        KUBE_DEPLOY_FILE = "k8s/flask-deployment.yaml"
+        APP_NAME = 'weather-app'
+        K8S_DEPLOYMENT = 'k8s/flask-deployment.yaml'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
-                echo '🔄 Cloning Git repository...'
-                git branch: 'main', url: 'https://github.com/Sayyamjain1301/weather-devops'
+                echo "🔄 Cloning Git repository..."
+                git branch: 'main', url: 'https://github.com/Sayyamjain1301/weather-devops.git'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Setup Minikube Docker Environment') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh 'eval $(minikube docker-env)'
-                sh 'docker build -t $IMAGE_NAME .'
+                echo "⚙️ Setting up Minikube Docker environment..."
+                // Connect Docker CLI inside Jenkins to Minikube’s Docker daemon
+                sh '''
+                if ! command -v minikube >/dev/null 2>&1; then
+                    echo "❌ Minikube not found. Make sure Minikube is installed on the Jenkins node."
+                    exit 1
+                fi
+                eval $(minikube -p minikube docker-env)
+                '''
+            }
+        }
+
+        stage('Build Docker Image using Minikube Docker') {
+            steps {
+                echo "🐳 Building Docker image inside Minikube environment..."
+                sh '''
+                eval $(minikube -p minikube docker-env)
+                docker build -t ${APP_NAME}:latest .
+                '''
             }
         }
 
         stage('Verify Image') {
             steps {
-                sh 'docker images | grep weather-app || echo "⚠️ Image not found!"'
+                echo "🔍 Verifying built Docker image..."
+                sh '''
+                eval $(minikube -p minikube docker-env)
+                docker images | grep ${APP_NAME} || (echo "❌ Image not found!" && exit 1)
+                '''
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo '🚀 Deploying to Kubernetes...'
-                sh 'kubectl delete deployment $APP_NAME --ignore-not-found=true'
-                sh 'kubectl apply -f $KUBE_DEPLOY_FILE'
+                echo "🚀 Deploying ${APP_NAME} to Kubernetes..."
+                sh '''
+                kubectl delete deployment ${APP_NAME} --ignore-not-found
+                kubectl delete service weather-service --ignore-not-found
+                kubectl apply -f ${K8S_DEPLOYMENT}
+                '''
             }
         }
 
         stage('Post-Deployment Check') {
             steps {
-                echo '🔍 Checking app status...'
-                sh 'kubectl get pods -o wide'
-                sh 'kubectl get svc weather-service'
+                echo "✅ Checking running pods and services..."
+                sh '''
+                kubectl get pods -o wide
+                kubectl get svc
+                '''
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment successful! Access via: minikube service weather-service --url'
+            echo "🎉 Deployment completed successfully! Weather App is live in Minikube!"
         }
         failure {
-            echo '❌ Deployment failed. Check Jenkins logs for details.'
+            echo "❌ Deployment failed. Please check Jenkins logs for details."
         }
     }
 }
