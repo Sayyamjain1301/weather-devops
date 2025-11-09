@@ -4,53 +4,29 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "🔄 Cloning Git repository..."
+                echo "🔄 Pulling latest code from GitHub..."
                 git branch: 'main', url: 'https://github.com/Sayyamjain1301/weather-devops.git'
             }
         }
 
-        stage('Build Docker Image (local)') {
+        stage('Trigger Local Build') {
             steps {
-                echo "🐳 Building Docker image locally..."
-                sh '''
-                docker build -t weather-app:latest .
-                '''
-            }
-        }
-
-        stage('Verify Image') {
-            steps {
-                echo "🔍 Checking Docker image..."
-                sh 'docker images | grep weather-app || true'
-            }
-        }
-
-        stage('Deploy to Kubernetes (Manual Trigger)') {
-            steps {
-                echo "🚀 Deploying app to Kubernetes..."
-                sh '''
-                echo "Skipping Minikube setup (using your local environment)..."
-                kubectl delete deployment weather-app --ignore-not-found
-                kubectl delete service weather-service --ignore-not-found
-                kubectl apply -f k8s/flask-deployment.yaml
-                '''
-            }
-        }
-
-        stage('Post-Deployment Check') {
-            steps {
-                echo "✅ Checking running pods..."
-                sh 'kubectl get pods -o wide'
+                echo "🚀 Triggering local build manually..."
+                echo "Please run these commands in your terminal:"
+                echo "1️⃣ eval \$(minikube docker-env)"
+                echo "2️⃣ docker build -t weather-app:latest ."
+                echo "3️⃣ kubectl apply -f k8s/flask-deployment.yaml"
+                echo "✅ Then verify using: kubectl get pods"
             }
         }
     }
 
     post {
         success {
-            echo "🎉 CI/CD pipeline executed successfully on local environment!"
+            echo "🎉 Jenkins pipeline executed successfully!"
         }
         failure {
-            echo "❌ Deployment failed. Check Jenkins logs for details."
+            echo "❌ Jenkins pipeline failed. Check logs!"
         }
     }
 }
