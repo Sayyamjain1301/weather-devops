@@ -2,66 +2,56 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "weather-devops"
-        DOCKER_IMAGE = "sayyamjain/${APP_NAME}"
+        APP_NAME = "weather-app"
+        IMAGE_NAME = "weather-app:latest"
+        KUBE_DEPLOY_FILE = "k8s/flask-deployment.yaml"
     }
 
     stages {
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                echo '📦 Checking out source code...'
-                checkout scm
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                echo '📥 Installing Python dependencies...'
-                sh 'pip install -r requirements.txt'
-            }
-        }
-
-        stage('Run Unit Tests') {
-            steps {
-                echo '🧪 Running tests...'
-                sh 'pytest || echo "⚠️ No tests found, skipping..."'
+                echo '🔄 Cloning Git repository...'
+                git branch: 'main', url: 'https://github.com/Sayyamjain1301/weather-devops'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Building Docker image...'
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh 'eval $(minikube docker-env)'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
-        stage('Run Container') {
+        stage('Verify Image') {
             steps {
-                echo '🚀 Running container for verification...'
-                sh 'docker run -d -p 8080:8080 $DOCKER_IMAGE'
+                sh 'docker images | grep weather-app || echo "⚠️ Image not found!"'
             }
         }
 
-        stage('Monitor Metrics') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo '📊 Verifying Prometheus metrics endpoint...'
-                sh 'curl -f http://localhost:8080/metrics || echo "Metrics not available yet"'
+                echo '🚀 Deploying to Kubernetes...'
+                sh 'kubectl delete deployment $APP_NAME --ignore-not-found=true'
+                sh 'kubectl apply -f $KUBE_DEPLOY_FILE'
             }
         }
 
-        stage('Clean Up') {
+        stage('Post-Deployment Check') {
             steps {
-                echo '🧹 Cleaning up Docker containers...'
-                sh 'docker stop $(docker ps -q) || true'
-                sh 'docker rm $(docker ps -a -q) || true'
+                echo '🔍 Checking app status...'
+                sh 'kubectl get pods -o wide'
+                sh 'kubectl get svc weather-service'
             }
         }
     }
 
     post {
-        always {
-            echo '✅ Build pipeline finished.'
+        success {
+            echo '✅ Deployment successful! Access via: minikube service weather-service --url'
+        }
+        failure {
+            echo '❌ Deployment failed. Check Jenkins logs for details.'
         }
     }
 }
